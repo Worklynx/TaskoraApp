@@ -1,0 +1,158 @@
+import customtkinter as ctk
+from theme import *
+from database import get_tasks_by_creator
+
+
+class MyPostedTasksScreen(ctk.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, fg_color=BG)
+
+        self.master = master
+        self.user = self.master.current_user
+
+        # ---------------- TOP BAR ---------------- #
+        top = ctk.CTkFrame(self, fg_color="transparent")
+        top.pack(fill="x", padx=25, pady=(15, 5))
+
+        back_btn = ctk.CTkButton(
+            top,
+            text="← Back",
+            width=90,
+            height=36,
+            corner_radius=12,
+            fg_color="transparent",
+            hover_color="#141B3A",
+            text_color=NEON_PINK,
+            font=("Arial", 14, "bold"),
+            command=self.master.show_dashboard
+        )
+        back_btn.pack(side="left")
+
+        title = ctk.CTkLabel(
+            top,
+            text="My Posted Tasks",
+            font=("Arial", 30, "bold"),
+            text_color=NEON_CYAN
+        )
+        title.pack(side="left", padx=20)
+
+        subtitle = ctk.CTkLabel(
+            self,
+            text="Manage tasks you created and view applicants.",
+            font=("Arial", 14),
+            text_color=MUTED
+        )
+        subtitle.pack(anchor="w", padx=45, pady=(0, 15))
+
+        # ---------------- SCROLLABLE LIST ---------------- #
+        self.scroll_frame = ctk.CTkScrollableFrame(
+            self,
+            width=900,
+            height=450,
+            corner_radius=20,
+            fg_color=CARD,
+            scrollbar_button_color=NEON_PURPLE,
+            scrollbar_button_hover_color=NEON_CYAN
+        )
+        self.scroll_frame.pack(padx=45, pady=10, fill="both", expand=True)
+
+        self.load_tasks()
+
+    def load_tasks(self):
+        try:
+            my_tasks = get_tasks_by_creator(self.user["phone"])
+        except Exception as e:
+            error = ctk.CTkLabel(
+                self.scroll_frame,
+                text="⚠ Database error. Check terminal.",
+                font=("Arial", 16, "bold"),
+                text_color=NEON_PINK
+            )
+            error.pack(pady=60)
+            print("MY POSTED TASKS ERROR:", e)
+            return
+
+        if len(my_tasks) == 0:
+            empty = ctk.CTkLabel(
+                self.scroll_frame,
+                text="You have not posted any tasks yet.",
+                font=("Arial", 16, "bold"),
+                text_color=MUTED
+            )
+            empty.pack(pady=60)
+            return
+
+        for task in my_tasks:
+            self.create_task_card(task)
+
+    def create_task_card(self, task):
+        status = task.get("status", "Open")
+
+        if status == "Open":
+            status_color = NEON_GREEN
+        elif status == "Assigned":
+            status_color = NEON_PURPLE
+        elif status == "Completed":
+            status_color = NEON_CYAN
+        else:
+            status_color = MUTED
+
+        card = ctk.CTkFrame(
+            self.scroll_frame,
+            corner_radius=18,
+            fg_color=PANEL,
+            border_width=2,
+            border_color=status_color
+        )
+        card.pack(fill="x", pady=12, padx=15)
+
+        title = ctk.CTkLabel(
+            card,
+            text=task["title"],
+            font=("Arial", 18, "bold"),
+            text_color=TEXT
+        )
+        title.pack(anchor="w", padx=20, pady=(15, 2))
+
+        details = ctk.CTkLabel(
+            card,
+            text=f"📍 {task['location']}   |   💰 R{task['reward']}   |   ⚡ Status: {status}",
+            font=("Arial", 13),
+            text_color=MUTED
+        )
+        details.pack(anchor="w", padx=20, pady=(0, 8))
+
+        desc = ctk.CTkLabel(
+            card,
+            text=task["description"][:80] + "..." if len(task["description"]) > 80 else task["description"],
+            font=("Arial", 12),
+            text_color=MUTED,
+            wraplength=780,
+            justify="left"
+        )
+        desc.pack(anchor="w", padx=20, pady=(0, 10))
+
+        bottom = ctk.CTkFrame(card, fg_color="transparent")
+        bottom.pack(fill="x", padx=20, pady=(0, 15))
+
+        status_label = ctk.CTkLabel(
+            bottom,
+            text=status,
+            font=("Arial", 13, "bold"),
+            text_color=status_color
+        )
+        status_label.pack(side="left")
+
+        manage_btn = ctk.CTkButton(
+            bottom,
+            text="Manage Applicants →",
+            width=180,
+            height=40,
+            corner_radius=14,
+            fg_color=NEON_CYAN,
+            hover_color=NEON_PURPLE,
+            text_color=BG,
+            font=("Arial", 13, "bold"),
+            command=lambda: self.master.show_manage_applicants(task)
+        )
+        manage_btn.pack(side="right")
