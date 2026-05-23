@@ -1,0 +1,24 @@
+# =========================================
+# PYTHON CACHE FILES
+# =========================================
+# Automatically generated when running Python
+
+__pycache__/
+*.pyc
+*.pyo
+
+
+# =========================================
+# VS CODE SETTINGS
+# =========================================
+# Local editor configuration (not part of project
+
+.vscode/
+
+
+# =========================================
+# WINDOWS SYSTEM FILES
+# =========================================
+# Temporary system cache files
+
+Thumbs.db
