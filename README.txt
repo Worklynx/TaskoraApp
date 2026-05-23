@@ -316,4 +316,3 @@ Before running the project:
 ✔ Database Connected
 ✔ OOP Implemented
 ✔ GitHub Ready
-✔ Submission Ready
