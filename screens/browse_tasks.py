@@ -1,0 +1,125 @@
+import customtkinter as ctk
+from theme import *
+from database import get_all_open_tasks
+
+
+class BrowseTasksScreen(ctk.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, fg_color=BG)
+
+        self.master = master
+        self.user = self.master.current_user
+
+        # ---------------- TOP BAR ---------------- #
+        top = ctk.CTkFrame(self, fg_color="transparent")
+        top.pack(fill="x", padx=25, pady=(15, 5))
+
+        back_btn = ctk.CTkButton(
+            top,
+            text="← Back",
+            width=90,
+            height=36,
+            corner_radius=12,
+            fg_color="transparent",
+            hover_color="#141B3A",
+            text_color=NEON_PINK,
+            font=("Arial", 14, "bold"),
+            command=self.master.show_dashboard
+        )
+        back_btn.pack(side="left")
+
+        title = ctk.CTkLabel(
+            top,
+            text="Browse Tasks",
+            font=("Arial", 30, "bold"),
+            text_color=NEON_CYAN
+        )
+        title.pack(side="left", padx=20)
+
+        # ---------------- SCROLLABLE FRAME ---------------- #
+        self.scroll = ctk.CTkScrollableFrame(
+            self,
+            width=900,
+            height=470,
+            corner_radius=20,
+            fg_color=CARD,
+            scrollbar_button_color=NEON_PURPLE,
+            scrollbar_button_hover_color=NEON_CYAN
+        )
+        self.scroll.pack(padx=45, pady=15, fill="both", expand=True)
+
+        self.load_tasks()
+
+    def load_tasks(self):
+        try:
+            tasks = get_all_open_tasks()
+        except Exception as e:
+            error = ctk.CTkLabel(
+                self.scroll,
+                text="⚠ Database error. Check terminal.",
+                font=("Arial", 16, "bold"),
+                text_color=NEON_PINK
+            )
+            error.pack(pady=60)
+            print("BROWSE TASKS ERROR:", e)
+            return
+
+        # remove tasks created by this same user
+        tasks = [t for t in tasks if t["creator"] != self.user["phone"]]
+
+        if len(tasks) == 0:
+            empty = ctk.CTkLabel(
+                self.scroll,
+                text="No tasks available right now.",
+                font=("Arial", 16, "bold"),
+                text_color=MUTED
+            )
+            empty.pack(pady=60)
+            return
+
+        for task in tasks:
+            self.create_task_card(task)
+
+    def create_task_card(self, task):
+        card = ctk.CTkFrame(
+            self.scroll,
+            corner_radius=18,
+            fg_color=PANEL,
+            border_width=2,
+            border_color=NEON_PURPLE
+        )
+        card.pack(fill="x", pady=12, padx=15)
+
+        title = ctk.CTkLabel(
+            card,
+            text=task["title"],
+            font=("Arial", 18, "bold"),
+            text_color=TEXT
+        )
+        title.pack(anchor="w", padx=20, pady=(15, 2))
+
+        details = ctk.CTkLabel(
+            card,
+            text=f"📍 {task['location']}   |   💰 R{task['reward']}",
+            font=("Arial", 13),
+            text_color=MUTED
+        )
+        details.pack(anchor="w", padx=20, pady=(0, 10))
+
+        btn = ctk.CTkButton(
+            card,
+            text="View Details →",
+            width=160,
+            height=40,
+            corner_radius=14,
+            fg_color=NEON_CYAN,
+            hover_color=NEON_PURPLE,
+            text_color=BG,
+            font=("Arial", 13, "bold"),
+            command=lambda: self.open_details(task)
+        )
+        btn.pack(anchor="e", padx=20, pady=(0, 15))
+
+    def open_details(self, task):
+        self.master.selected_task = task
+        self.master.show_task_details(task)
